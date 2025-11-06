@@ -20,6 +20,8 @@ $users = [];
 for ($i = 1; $i < 11; $i++) {
     $users[] = "Name{$i}";
 };
+$list = ['mike', 'mishel', 'adel', 'keks', 'kamila'];
+$users = array_merge($users, $list);
 
 $app->get('/', function ($request, $response) {
     $response->getBody()->write('Welcome to Slim!');
@@ -40,8 +42,12 @@ $app->post('/users', function ($request, $response) use ($users) {
     return $response->withStatus(302);
 });
 
-$app->get('/users', function ($request, $response) {
-    return $response->write('GET /users');
+$app->get('/users', function ($request, $response, $args) use ($users) {
+    //$response->getBody()->write('GET /users');
+    $term = $request->getQueryParam('term');
+    $filteredUsers = $users;
+    $params = ['users' => $filteredUsers, 'term'=> $term];
+    return $this->get('renderer')->render($response, 'users/index.phtml', $params);
 });
 
 $app->get('/courses/{id}', function ($request, $response, $args) {
