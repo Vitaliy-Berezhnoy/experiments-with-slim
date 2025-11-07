@@ -24,10 +24,11 @@ $list = ['mike', 'mishel', 'adel', 'keks', 'kamila'];
 $users = array_merge($users, $list);
 
 $app->get('/', function ($request, $response) {
-    $response->getBody()->write('Welcome to Slim!');
-    return $response;
+    //$response->getBody()->write('Welcome to Slim!');
+    //return $response;
     // Благодаря пакету slim/http этот же код можно записать короче
     // return $response->write('Welcome to Slim!');
+    return $this->get('renderer')->render($response, 'home.phtml', []);
 });
 
 $app->post('/users', function ($request, $response) use ($users) {
@@ -42,10 +43,19 @@ $app->post('/users', function ($request, $response) use ($users) {
     return $response->withStatus(302);
 });
 
-$app->get('/users', function ($request, $response, $args) use ($users) {
+$app->get('/users', function ($request, $response) use ($users) {
     //$response->getBody()->write('GET /users');
-    $term = $request->getQueryParam('term');
-    $filteredUsers = $users;
+    $term = $request->getQueryParam('term','');
+    if ($term === '') {
+        $filteredUsers = $users;
+    } else {
+        $filteredUsers = [];
+        foreach ($users as $user) {
+            if (str_contains($user, $term)) {
+                $filteredUsers[] = $user;
+            };
+        };
+    };
     $params = ['users' => $filteredUsers, 'term'=> $term];
     return $this->get('renderer')->render($response, 'users/index.phtml', $params);
 });
