@@ -32,15 +32,37 @@ $app->get('/', function ($request, $response) {
 });
 
 $app->post('/users', function ($request, $response) use ($users) {
-    $response->getBody()->write('POST/users');
+    //$response->getBody()->write('POST/users');
 
-    $page = $request->getQueryParam('page', 1);
-    $per = $request->getQueryParam('per', 3);
-    $offset = ($page -1) * $per;
-    $slice = array_slice($users, $offset, $per);
-    $response->getBody()->write(json_encode($slice));
+    // Извлекаем данные формы
+    $user = $request->getParsedBodyParam('user', []);
 
-    return $response->withStatus(302);
+    // Валидация
+    $errors = [];
+    if (empty($user['nickname'])) {
+        $errors['nickname'] = 'Поле Никнейм не может быть пустым';
+    }
+    if (!filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = 'Некорректный формат email';
+    }
+
+    // Если есть ошибки — показываем форму с сообщениями
+    if (!empty($errors)) {
+        $params = ['user' => $user, 'errors' => $errors];
+        return $this->get('renderer')->render($response, 'users/new.phtml', $params);
+    }
+
+    // Генерируем ID
+    $user['id'] = uniqid();
+    
+});
+
+$app->get('/users/new', function ($request, $response) {
+    $params = [
+        'user' => ['nickname' => '', 'email' => ''],
+        'errors' => ''
+    ];
+    return $this->get('renderer')->render($response, 'users/new.phtml', $params);
 });
 
 $app->get('/users', function ($request, $response) use ($users) {
@@ -56,7 +78,14 @@ $app->get('/users', function ($request, $response) use ($users) {
             };
         };
     };
-    $params = ['users' => $filteredUsers, 'term'=> $term];
+    $page = $request->getQueryParam('page', 1);
+    $per = $request->getQueryParam('per', 5);
+    $offset = ($page -1) * $per;
+    $slice = array_slice($filteredUsers, $offset, $per);
+    //$response->getBody()->write(json_encode($slice));
+    // Надо добавить в шаблон кнопки для листания страниц!
+
+    $params = ['users' => $slice, 'term'=> $term];
     return $this->get('renderer')->render($response, 'users/index.phtml', $params);
 });
 
