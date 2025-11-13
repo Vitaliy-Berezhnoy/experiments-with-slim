@@ -8,7 +8,7 @@
 <div>
     <ul>
         <?php foreach ($users as $user): ?>
-            <li><?= htmlspecialchars($user) ?></li>
+            <li><?= htmlspecialchars($user['nickname']) ?></li>
         <?php endforeach; ?>
     </ul>
 </div>

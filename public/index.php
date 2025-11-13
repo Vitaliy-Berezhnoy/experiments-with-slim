@@ -31,7 +31,7 @@ $app->get('/', function ($request, $response) {
     return $this->get('renderer')->render($response, 'home.phtml', []);
 });
 
-$app->post('/users', function ($request, $response) use ($users) {
+$app->post('/users', function ($request, $response) {
     //$response->getBody()->write('POST/users');
 
     // Извлекаем данные формы
@@ -54,7 +54,23 @@ $app->post('/users', function ($request, $response) use ($users) {
 
     // Генерируем ID
     $user['id'] = uniqid();
-    
+
+    // Сохраняем в файл (в формате JSON)
+    $usersFilePath = __DIR__ . '/data/users.json';
+    $users = [];
+
+    // Читаем существующие данные
+    if (file_exists($usersFilePath)) {
+        $users = json_decode(file_get_contents($usersFilePath), true) ?? [];
+    }
+
+    // Добавляем нового пользователя
+    $users[] = $user;
+
+    // Записываем обновлённый список
+    file_put_contents($usersFilePath, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+    return $response->withRedirect('/users', 302);
 });
 
 $app->get('/users/new', function ($request, $response) {
@@ -65,15 +81,24 @@ $app->get('/users/new', function ($request, $response) {
     return $this->get('renderer')->render($response, 'users/new.phtml', $params);
 });
 
-$app->get('/users', function ($request, $response) use ($users) {
+$app->get('/users', function ($request, $response) {
     //$response->getBody()->write('GET /users');
+
+    $usersFilePath = __DIR__ . '/data/users.json';
+    $users = [];
+
+    // Читаем существующие данные
+    if (file_exists($usersFilePath)) {
+        $users = json_decode(file_get_contents($usersFilePath), true) ?? [];
+    }
+
     $term = $request->getQueryParam('term','');
     if ($term === '') {
         $filteredUsers = $users;
     } else {
         $filteredUsers = [];
         foreach ($users as $user) {
-            if (str_contains($user, $term)) {
+            if (str_contains($user['nickname'], $term)) {
                 $filteredUsers[] = $user;
             };
         };
